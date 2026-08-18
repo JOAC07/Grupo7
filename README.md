@@ -1,4 +1,4 @@
-# [Nombre del Sistema] — Grupo [N]
+# Sistema SAS — Grupo 7
 
 > Materia: Diseño de Sistemas Web — Analista Funcional de Sistemas  
 > Institución: Terciario Urquiza — Rosario  
