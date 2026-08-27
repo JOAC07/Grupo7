@@ -42,13 +42,13 @@ El sistema se integra con Loyverse, una plataforma de gestion comercial (POS), d
 |----|-----------|
 | RNF-01 |  El sistema deberá estar disponible entre las 07:00 hs hasta las 23:00 hs. |
 | RNF-02 | Las consultas realizadas por el usuario deberán responderse en 15 segundos para garantizar una interacción rápida y eficiente. |
-| RNF-03 | La información proporcionada por el sistema deberá ser precisa y mantenerse actualizada en tiempo real o con mínima demora. |
+| RNF-03 | La información proporcionada por el sistema deberá reflejar los datos de Loyverse con una demora máxima de 5 segundos desde que ocurre el cambio. |
 
 ### Seguridad y usabilidad
 
 | ID | Requisito |
 |----|-----------|
-| RNF-04 | El sistema deberá ser simple e intuitivo, permitiendo que el usuario pueda realizar consultas sin necesidad de conocimientos técnicos avanzados. |
+| RNF-04 | Un usuario sin conocimientos técnicos deberá poder completar una consulta utilizando un máximo de 2 comandos. |
 | RNF-05 |  El sistema deberá permitir el acceso únicamente a usuarios autorizados mediante validación del identificador de Telegram. |
 | RNF-06 | El sistema deberá funcionar correctamente en dispositivos móviles, computadoras y cualquier dispositivo compatible con Telegram. |
 
@@ -56,5 +56,5 @@ El sistema se integra con Loyverse, una plataforma de gestion comercial (POS), d
 
 | ID | Requisito |
 |----|-----------|
-| RNF-07 | El sistema deberá permitir futuras mejoras o incorporación de nuevas funcionalidades sin necesidad de rediseñar completamente la estructura. |
-| RNF-08 |  La estructura del sistema y los flujos de n8n deberán desarrollarse con buenas prácticas para facilitar tareas de mantenimiento y actualización. |
+| RNF-07 | El sistema deberá permitir agregar un nuevo flujo de consulta en n8n sin modificar los flujos existentes. |
+| RNF-08 | Los flujos de n8n deberán estar documentados con un nombre descriptivo y comentarios en cada nodo, para que un integrante nuevo pueda entenderlos sin explicación previa. |
