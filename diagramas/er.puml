@@ -1,31 +1,43 @@
 @startuml
-title Modelo Entidad-Relación - [Nombre del Sistema]
+title Modelo Entidad-Relación - Sistema SAS
 
 ' --- Entidades ---
-entity Entidad1 {
-  * id_entidad1 : integer <<PK>>
+entity Producto {
+  * id_producto : integer <<PK>>
   --
-  atributo1 : varchar
-  atributo2 : varchar
+  nombre : varchar
+  codigo : varchar
+  categoria : varchar
+  stock_actual : integer
+  stock_minimo : integer
 }
 
-entity Entidad2 {
-  * id_entidad2 : integer <<PK>>
+entity Venta {
+  * id_venta : integer <<PK>>
   --
-  atributo1 : varchar
-  id_entidad1 : integer <<FK>>
+  id_producto : integer <<FK>>
+  cantidad : integer
+  monto : decimal
+  fecha : datetime
 }
 
-entity Entidad3 {
-  * id_entidad3 : integer <<PK>>
+entity Alerta {
+  * id_alerta : integer <<PK>>
   --
-  atributo1 : varchar
-  id_entidad1 : integer <<FK>>
+  id_producto : integer <<FK>>
+  fecha_hora : datetime
+  stock_al_momento : integer
+}
+
+entity Usuario {
+  * id_usuario : integer <<PK>>
+  --
+  telegram_id : varchar
+  nombre : varchar
 }
 
 ' --- Relaciones ---
-' Sintaxis: EntidadA [cardinalidad] -- [cardinalidad] EntidadB : "etiqueta"
-Entidad1 ||--o{ Entidad2 : "relación"
-Entidad1 ||--o{ Entidad3 : "relación"
+Producto ||--o{ Venta : "se vende en"
+Producto ||--o{ Alerta : "genera"
 
 @enduml
