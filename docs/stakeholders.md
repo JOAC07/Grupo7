@@ -59,8 +59,8 @@ _Para cada una: describir su rol y por qué es clave para el proyecto._
 |-------------|------|-----------------|
 | Dueño del Comercio | Intermedio | Alto |
 | Encargado del Comercio | Intermedio | Alto |
-| Administrador del Sistema | | Medio |
-| Desarrollador del Sistema | | Medio |
+| Administrador del Sistema | Interno | Medio |
+| Desarrollador del Sistema | Interno | Medio |
 | Loyverse | Sistema externo | Alto |
 | Telegram | Sistema externo | Medio |
 | n8n | Sistema externo | Alto |
