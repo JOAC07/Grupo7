@@ -9,21 +9,21 @@ _Cada historia debe incluir formato clásico, criterios de aceptación y validac
 
 | Campo | Detalle |
 |-------|---------|
-| Historia | Como dueño o encargado del comercio, quiero consultar el sotck disponible de los productos mediante Telegram, para conocer la disponibilidad de mercaderia en tiempo real. |
-| Módulo | Consulta de Informacion General |
+| Historia | Como dueño o encargado del comercio, quiero consultar el stock disponible de los productos mediante Telegram, para conocer la disponibilidad de mercaderia en tiempo real. |
+| Módulo | Consulta de información General |
 | Requisitos relacionados | RF-01, RNF-02 |
 
 ### Criterios de aceptación
 
 1. El usuario envia un comando de consulta de stock por Telegram y el bot responde con la cantidad disponible del producto solicitado.
-2. Si el producto consultado no existe en el sistema, el bot informa quee no fue encontrado.
-3. El sistema responde a la consulta en un plazo maximo de 15 segundos, segun lo definido en RNF-02
+2. Si el producto consultado no existe en el sistema, el bot informa que no fue encontrado.
+3. El sistema responde a la consulta en un plazo máximo de 15 segundos, según lo definido en RNF-02
 
 ### Validación INVEST
 
 | Criterio | ¿Se cumple? | Observación |
 |----------|-------------|-------------|
-| Independiente | Si | No depende de que otra HU este implementada, solo requiere que RF-01 exista.|
+| Independiente | Si | No depende de que otra HU esté implementada, solo requiere que RF-01 exista.|
 | Negociable | Si | El formato del mensaje de respuesta puede acordarse con el equipo sin afectar el objetivo. |
 | Valiosa | Si | Evita que el usuario deba abrir Loyverse directamente para saber el stock, ahorrando tiempo operativo. |
 | Estimable | Si |  El alcance (una consulta, una respuesta) es acotado y estimable en horas de desarrollo. |
@@ -32,11 +32,11 @@ _Cada historia debe incluir formato clásico, criterios de aceptación y validac
 
 ---
 
-## HU-02 — Recepcion de Alertas de Stock Bajo
+## HU-02 — Recepción de Alertas de Stock Bajo
 
 | Campo | Detalle |
 |-------|---------|
-| Historia | Como dueño o encargado del comercio, quiero recibir alertas automaticas cuando un producto tenga poco stock, para evitar faltantes de mercaderia. |
+| Historia | Como dueño o encargado del comercio, quiero recibir alertas automáticas cuando un producto tenga poco stock, para evitar faltantes de mercadería. |
 | Módulo | Consulta de Inofrmacion General |
 | Requisitos relacionados | RF-04 |
 
@@ -59,7 +59,7 @@ _Cada historia debe incluir formato clásico, criterios de aceptación y validac
 
 ---
 
-## HU-03 — Recepcion de Respuestas Automaticas
+## HU-03 — Recepción de Respuestas Automáticas
 
 | Campo | Detalle |
 |-------|---------|
@@ -86,7 +86,7 @@ _Cada historia debe incluir formato clásico, criterios de aceptación y validac
 
 ---
 
-## HU-04 — Generacion de Reporte
+## HU-04 — Generación de Reporte
 
 | Campo | Detalle |
 |-------|---------|
