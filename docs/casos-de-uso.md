@@ -66,226 +66,423 @@ _Describir brevemente los actores identificados y las relaciones principales (in
 |---|-----------|-----------------------|
 | E1 | | |
 
-CU-01 Consultar Stock de Producto
-
-Actor: Usuario Autorizado
-Precondición: Usuario validado (UC7)
-Flujo básico:
-
-Usuario envía /stock <producto>.
-n8n valida y procesa (UC8).
-Se consulta Loyverse (UC9).
-Bot responde cantidad disponible.
-
-Excepciones:
-
-E1: Producto no existe → "Producto no encontrado" (404 API).
-E2: Loyverse timeout/error 500 → reintento x1, luego "Servicio no disponible".
-E3: Comando sin producto → "Debe indicar un producto".
-E4: Nombre ambiguo → lista coincidencias y pide precisar.
-
-Rendimiento: ≤15s total (RNF-02); consulta Loyverse ≤5s (RNF-03).
-Frecuencia: 40-60 consultas/día, picos 10/hora (07-09hs).
-
-CU-02 Consultar Ventas por Período
-
-Actor: Usuario Autorizado
-Precondición: Usuario validado (UC7)
-Flujo básico:
-
-Usuario envía /ventas <día|semana|mes>.
-n8n procesa (UC8) y consulta Loyverse (UC9).
-Bot responde total y detalle de ventas.
-
-Excepciones:
-
-E1: Período sin ventas → "Sin ventas registradas en el período".
-E2: Parámetro de período inválido → "Período no reconocido, use día/semana/mes".
-E3: Loyverse no disponible → mensaje de error temporal.
-
-Rendimiento: ≤15s (RNF-02); datos con demora máx. 5s (RNF-03).
-Frecuencia: 15-20 consultas/día.
-
-CU-03 Consultar Productos Más Vendidos
-
-Actor: Usuario Autorizado
-Precondición: Usuario validado (UC7)
-Flujo básico:
-
-Usuario envía /top <cantidad>.
-n8n procesa (UC8) y consulta ventas en Loyverse (UC9).
-Bot responde ranking de productos.
-
-Excepciones:
-
-E1: Cantidad solicitada excede catálogo disponible → se devuelve el máximo posible con aviso.
-E2: Sin ventas históricas suficientes → "Datos insuficientes para generar ranking".
-E3: Parámetro no numérico → "Ingrese un número válido".
-
-Rendimiento: ≤15s (RNF-02).
-Frecuencia: 5-10 consultas/día.
-
-CU-04 Consultar Resumen del Negocio
-
-Actor: Usuario Autorizado
-Precondición: Usuario validado (UC7)
-Flujo básico:
-
-Usuario envía /resumen.
-n8n procesa (UC8) y consulta Loyverse (UC9).
-Bot responde cantidad de productos, ventas totales y movimientos recientes.
-
-Excepciones:
-
-E1: Falta uno de los indicadores (ej. sin movimientos recientes) → se omite esa sección con aviso "Sin movimientos recientes".
-E2: Loyverse con datos parciales → resumen indica "Información incompleta al momento de la consulta".
-
-Rendimiento: ≤15s (RNF-02).
-Frecuencia: 10-15 consultas/día.
-
-CU-05 Generar Reporte
-
-Actor: Usuario Autorizado
-Precondición: Usuario validado; existen datos en el período
-Flujo básico:
-
-Usuario envía /reporte <tipo> <período>.
-n8n procesa (UC8) y consulta Loyverse (UC9).
-Bot entrega reporte en el chat.
-
-Excepciones:
-
-E1: Sin movimientos → "Sin movimientos en el período solicitado".
-E2: Rango de fechas inválido → "Rango de fechas inválido".
-E3: >1000 registros → reporte parcial + "Reporte truncado, solicite un rango menor".
-E4: Rate-limit de Loyverse → "Reporte en proceso, se enviará en breve".
-
-Rendimiento: ≤15s hasta ~1000 registros (RNF-02); demora datos máx. 5s (RNF-03).
-Frecuencia: 3-6 reportes/día, concentrados 20-23hs.
-
-CU-06 Recibir Alerta de Stock Bajo
-
-Actor: n8n (disparador automático)
-Precondición: Producto con stock mínimo configurado
-Flujo básico:
-
-n8n consulta stock periódicamente (UC9).
-Detecta stock ≤ mínimo.
-Envía alerta por Telegram con nombre y cantidad.
-
-Excepciones:
-
-E1: Sin mínimo definido → no se genera alerta (log interno).
-E2: Producto discontinuado/inactivo → no dispara alerta aunque stock sea 0.
-
-Rendimiento: detección ≤5s desde cambio real (RNF-03); envío ≤15s desde detección.
-
-
-CU-07 Validar Usuario Autorizado
-
-Actor: Usuario Autorizado (incluido por UC1-UC6)
-Precondición: Ninguna
-Flujo básico:
-
-Se recibe ID de Telegram del emisor.
-Si coincide, continúa el flujo original.
-
-Excepciones:
-
-E1: ID no autorizado → bot responde "Acceso no autorizado" y corta el flujo (RF-08/RNF-05).
-
-
-Rendimiento: validación ≤1s (subconjunto de los 15s totales).
-Frecuencia: en cada interacción (100% de los mensajes recibidos).
-
-CU-08 Procesar Solicitud vía n8n
-
-Actor: n8n (incluido por UC1-UC6)
-Precondición: Usuario validado (UC7)
-Flujo básico:
-
-n8n recibe el comando parseado.
-Identifica el intent (stock, ventas, reporte, etc.).
-Ejecuta el flujo correspondiente y devuelve resultado a Telegram.
-
-Excepciones:
-
-E1: Comando no reconocido → extiende a UC10 (notificar comando inválido).
-E2: Nodo del flujo falla en ejecución → se responde "Error al procesar la solicitud, intente nuevamente".
-
-Rendimiento: procesamiento interno ≤10s (dejando margen para respuesta Telegram dentro de 15s).
-Frecuencia: equivalente al total de comandos recibidos, ~80-100/día.
-
-CU-09 Obtener Datos de Loyverse
-
-Actor: n8n (incluido por UC1, UC2, UC3, UC4, UC5, UC6)
-Precondición: Credenciales de API válidas
-Flujo básico:
-
-n8n arma la petición a la API de Loyverse.
-Loyverse responde con los datos solicitados.
-n8n entrega los datos al flujo que lo invocó.
-
-Excepciones:
-
-E1: Token de API expirado → n8n intenta renovar token automáticamente; si falla, se informa error de integración.
-E2: Timeout de red (>5s) → se marca dato como "no actualizado" y se informa al usuario si aplica.
-
-Rendimiento: respuesta ≤5s (RNF-03).
-Frecuencia: una llamada por cada CU que la incluye, ~100-130/día.
-
-CU-10 Notificar Comando Inválido
-
-Actor: Usuario Autorizado (extiende a UC8)
-Precondición: El intent del comando no matchea ningún flujo válido
-Flujo básico:
-
-n8n no encuentra coincidencia de intent.
-Bot responde "Comando no válido, use /ayuda para ver opciones".
-
-Excepciones:
-
-E1: Comando parcialmente similar a uno válido → se sugiere el comando más cercano (ej. /stok → "¿Quiso decir /stock?").
-
-Rendimiento: respuesta ≤15s (RNF-02).
-Frecuencia: estimado 5-10% del total de comandos recibidos/día.
-
-CU-11 Monitorear Flujos n8n
-
-Actor: Administrador del Sistema
-Precondición: Acceso al panel de n8n
-Flujo básico:
-
-Administrador revisa ejecución y logs de los flujos.
-Detecta fallos o cuellos de botella.
-Ajusta o corrige el flujo correspondiente.
-
-Excepciones:
-
-E1: Flujo sin documentación (incumple RNF-08) → se marca como pendiente de estandarización antes de modificar.
-E2: Cambio en un flujo rompe otro existente → se revierte y se aísla el flujo (RNF-07).
-
-Rendimiento: sin restricción de tiempo real (tarea de mantenimiento, no transaccional).
-Frecuencia: revisión estimada 1 vez/semana, o ante incidente reportado.
-
-CU-12 Mantener Infraestructura del Sistema
-
-Actor: Administrador del Sistema
-Precondición: Ninguna
-Flujo básico:
-
-Administrador supervisa disponibilidad del sistema (RNF-01).
-Verifica conexión con Loyverse, Telegram y n8n.
-Aplica correcciones o actualizaciones según necesidad.
-
-Excepciones:
-
-E1: Caída fuera del horario 07-23hs → no genera incidente crítico según RNF-01, se resuelve antes de apertura.
-E2: Integración con Loyverse caída durante horario operativo → se notifica al administrador de forma prioritaria.
-
-Rendimiento: disponibilidad garantizada 07:00-23:00hs (RNF-01).
-Frecuencia: monitoreo continuo/diario.
-
+## CU-01 — Consultar Stock de Producto
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | CU-01 |
+| Nombre | Consultar Stock de Producto |
+| Descripción | Permite al usuario consultar la cantidad disponible y el estado de inventario de un producto específico mediante un comando en Telegram. |
+| Actores | Principal: Usuario Autorizado (Dueño o Encargado) / Secundario: Loyverse API |
+| Precondiciones | Usuario autenticado en el sistema (CU-07). |
+| Postcondiciones | Éxito: Se entrega al chat de Telegram del usuario la información de stock actualizada sin modificar los datos almacenados en Loyverse. / Fallo: Se notifica el motivo del error sin alterar el estado del sistema. |
+
+### Secuencia normal
+
+| # | Acción (actor) | Reacción (sistema) |
+| --- | --- | --- |
+| 1 | El usuario envía el comando `/stock <producto>` por Telegram. | El sistema valida la autorización del usuario (CU-07) e interpreta el comando recibido (CU-08). |
+| 2 | El sistema procesa la solicitud. | El sistema realiza la consulta a la API de Loyverse para obtener el stock del producto solicitado (CU-09). |
+| 3 | Loyverse retorna la información de inventario. | El bot de Telegram responde al usuario detallando el nombre del producto, la categoría y la cantidad disponible. |
+
+### Excepciones
+
+| # | Situación | Respuesta del sistema |
+| --- | --- | --- |
+| E1 | Producto no encontrado en Loyverse | El bot responde: "Producto no encontrado. Verifique la descripción o código." |
+| E2 | Timeout o error 500/503 en la API de Loyverse | El sistema reintenta 1 vez; si persiste la falla, responde: "Servicio de consulta no disponible temporalmente. Intente más tarde." |
+| E3 | Comando ingresado sin especificar producto | El bot responde: "Debe indicar un producto. Ejemplo: /stock Coca Cola 500ml." |
+| E4 | Búsqueda devuelve múltiples coincidencias | El bot lista hasta 5 coincidencias solicitando al usuario seleccionar o precisar la búsqueda. |
+
+| Campo | Detalle |
+| --- | --- |
+| Rendimiento | Tiempo total ≤ 15s (RNF-03); consulta a API Loyverse ≤ 5s |
+| Frecuencia | 40 a 60 consultas/día (picos de 10 consultas/hora entre las 07:00 y 09:00 hs) |
+| Importancia | Alta |
+| Urgencia | Alta |
+
+---
+
+## CU-02 — Consultar Ventas por Período
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | CU-02 |
+| Nombre | Consultar Ventas por Período |
+| Descripción | Permite al usuario visualizar los montos acumulados y el volumen de transacciones comerciales para un período predefinido (día, semana o mes). |
+| Actores | Principal: Usuario Autorizado (Dueño o Encargado) / Secundario: Loyverse API |
+| Precondiciones | Usuario autenticado en el sistema (CU-07). |
+| Postcondiciones | Éxito: El usuario obtiene el resumen de ventas solicitado en su interfaz de Telegram. / Fallo: Se notifica el error sin modificar registros. |
+
+### Secuencia normal
+
+| # | Acción (actor) | Reacción (sistema) |
+| --- | --- | --- |
+| 1 | El usuario envía el comando `/ventas <día|semana|mes>` por Telegram. | El sistema valida al usuario (CU-07) e interpreta el parámetro de período (CU-08). |
+| 2 | El sistema procesa la petición de transacciones. | El sistema realiza la consulta de ventas a la API de Loyverse (CU-09). |
+| 3 | Loyverse entrega las transacciones del período. | El bot de Telegram responde con el total facturado, la cantidad de operaciones y el ticket promedio. |
+
+### Excepciones
+
+| # | Situación | Respuesta del sistema |
+| --- | --- | --- |
+| E1 | Sin ventas registradas en el período | El bot responde: "Sin ventas registradas en el período seleccionado." |
+| E2 | Parámetro de período no reconocido | El bot responde: "Período no reconocido. Utilice: /ventas dia, /ventas semana o /ventas mes." |
+| E3 | Falla de conectividad con Loyverse | El bot notifica: "No se pudieron sincronizar las ventas en este momento." |
+
+| Campo | Detalle |
+| --- | --- |
+| Rendimiento | Tiempo total ≤ 15s (RNF-03) |
+| Frecuencia | 15 a 20 consultas/día |
+| Importancia | Alta |
+| Urgencia | Media |
+
+---
+
+## CU-03 — Consultar Productos Más Vendidos
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | CU-03 |
+| Nombre | Consultar Productos Más Vendidos |
+| Descripción | Genera un ranking con los productos que presentan mayor cantidad de unidades vendidas en el negocio. |
+| Actores | Principal: Usuario Autorizado (Dueño o Encargado) / Secundario: Loyverse API |
+| Precondiciones | Usuario autenticado en el sistema (CU-07). |
+| Postcondiciones | Éxito: Se despliega el listado ordenado (Top) en el chat de Telegram. / Fallo: Se reporta la imposibilidad de generar el ranking. |
+
+### Secuencia normal
+
+| # | Acción (actor) | Reacción (sistema) |
+| --- | --- | --- |
+| 1 | El usuario envía el comando `/top <cantidad>` por Telegram. | El sistema valida el acceso (CU-07) y procesa el número límite solicitado (CU-08). |
+| 2 | El sistema solicita los datos acumulados. | El sistema obtiene el historial comercial desde Loyverse (CU-09). |
+| 3 | Loyverse retorna el volumen de ventas. | El sistema calcula, ordena y envía mediante el bot el ranking de productos con sus unidades vendidas. |
+
+### Excepciones
+
+| # | Situación | Respuesta del sistema |
+| --- | --- | --- |
+| E1 | Cantidad solicitada excede los productos del catálogo | El bot entrega el máximo posible agregando la nota: "Se muestran los X productos disponibles en catálogo." |
+| E2 | Sin datos históricos suficientes en Loyverse | El bot responde: "Datos insuficientes para generar el ranking comercial." |
+| E3 | Parámetro ingresado no numérico | El bot indica: "Ingrese un número entero válido mayor a 0 (Ejemplo: /top 5)." |
+
+| Campo | Detalle |
+| --- | --- |
+| Rendimiento | Tiempo total ≤ 15s (RNF-03) |
+| Frecuencia | 5 a 10 consultas/día |
+| Importancia | Media |
+| Urgencia | Media |
+
+---
+
+## CU-04 — Consultar Resumen del Negocio
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | CU-04 |
+| Nombre | Consultar Resumen del Negocio |
+| Descripción | Proporciona un panel rápido de métricas consolidadas del comercio (total de productos, ventas del día y movimientos recientes). |
+| Actores | Principal: Usuario Autorizado (Dueño o Encargado) / Secundario: Loyverse API |
+| Precondiciones | Usuario autenticado en el sistema (CU-07). |
+| Postcondiciones | Éxito: Se entrega el panel consolidado en Telegram. / Fallo: Se notifica la inconsistencia o indisponibilidad de datos. |
+
+### Secuencia normal
+
+| # | Acción (actor) | Reacción (sistema) |
+| --- | --- | --- |
+| 1 | El usuario envía el comando `/resumen` por Telegram. | El sistema valida las credenciales (CU-07) e interpreta la solicitud (CU-08). |
+| 2 | El sistema requiere métricas globales. | El sistema extrae la información general acumulada desde Loyverse (CU-09). |
+| 3 | Loyverse responde con los indicadores clave. | El bot responde con un mensaje estructurado que resume cantidad de productos, ventas diarias y últimas transacciones. |
+
+### Excepciones
+
+| # | Situación | Respuesta del sistema |
+| --- | --- | --- |
+| E1 | Sin movimientos registrados en la jornada | El bot reemplaza la sección de transacciones por la leyenda: "Sin movimientos registrados en el día de hoy." |
+| E2 | Datos incompletos por sincronización parcial | El bot genera el resumen agregando la advertencia: "Información incompleta al momento de la consulta." |
+
+| Campo | Detalle |
+| --- | --- |
+| Rendimiento | Tiempo total ≤ 15s (RNF-03) |
+| Frecuencia | 10 a 15 consultas/día |
+| Importancia | Alta |
+| Urgencia | Media |
+
+---
+
+## CU-05 — Generar Reporte
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | CU-05 |
+| Nombre | Generar Reporte |
+| Descripción | Consolida e informa un reporte sobre ventas, comportamiento de stock e indicadores del comercio para un rango de fechas. |
+| Actores | Principal: Usuario Autorizado (Dueño o Encargado) / Secundario: Loyverse API |
+| Precondiciones | Usuario autenticado (CU-07); existen datos registrados en el período solicitado. |
+| Postcondiciones | Éxito: El reporte consolidado es transmitido al chat de Telegram del usuario. / Fallo: Se notifica la restricción o falla en la consolidación. |
+
+### Secuencia normal
+
+| # | Acción (actor) | Reacción (sistema) |
+| --- | --- | --- |
+| 1 | El usuario envía `/reporte <fecha_inicio> <fecha_fin>` por Telegram. | El sistema valida al usuario (CU-07) e interpreta el rango de fechas (CU-08). |
+| 2 | El sistema solicita la información detallada. | El sistema realiza la extracción de datos masivos desde Loyverse (CU-09). |
+| 3 | Loyverse devuelve los datos requeridos. | El sistema compila el informe y el bot entrega el cuerpo formateado al usuario. |
+
+### Excepciones
+
+| # | Situación | Respuesta del sistema |
+| --- | --- | --- |
+| E1 | Sin movimientos registrados en el período | El bot responde: "Sin movimientos en el período solicitado." |
+| E2 | Rango de fechas inválido o formato erróneo | El bot indica: "Rango de fechas inválido. Formato requerido: DD/MM/AAAA DD/MM/AAAA." |
+| E3 | Volumen excede el límite (> 1000 registros) | El bot envía un reporte parcial con el mensaje: "Reporte truncado por volumen. Solicite un rango menor." |
+| E4 | Restricción por límite de peticiones (Rate-Limit) | El bot notifica: "Reporte en cola de procesamiento, se enviará en breve." |
+
+| Campo | Detalle |
+| --- | --- |
+| Rendimiento | Tiempo total ≤ 15s para hasta 1000 registros (RNF-03) |
+| Frecuencia | 3 a 6 reportes/día (concentrados entre las 20:00 y las 23:00 hs) |
+| Importancia | Media |
+| Urgencia | Media |
+
+---
+
+## CU-06 — Recibir Alerta de Stock Bajo
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | CU-06 |
+| Nombre | Recibir Alerta de Stock Bajo |
+| Descripción | Supervisa periódicamente el inventario y notifica automáticamente al usuario cuando un producto alcanza o supera su límite mínimo configurado. |
+| Actores | Principal: Temporizador del Sistema (Scheduler/Cron) / Secundario: Usuario Autorizado (Receptor), Loyverse API |
+| Precondiciones | Existen productos en Loyverse con un umbral de stock mínimo asignado mayor a cero. |
+| Postcondiciones | Éxito: Se entrega la notificación de advertencia por Telegram al usuario y se registra la alerta enviada. / Fallo: Se omite la notificación y se registra el evento en logs. |
+
+### Secuencia normal
+
+| # | Acción (actor) | Reacción (sistema) |
+| --- | --- | --- |
+| 1 | El Temporizador del Sistema dispara la revisión automática programada. | El sistema consulta el estado actual del inventario a la API de Loyverse (CU-09). |
+| 2 | Loyverse entrega el listado de productos y sus cantidades. | El sistema filtra los artículos con `stock_actual <= stock_minimo`. |
+| 3 | El sistema confirma la presencia de ítems críticos. | El bot de Telegram envía automáticamente la notificación preventiva al Usuario Autorizado. |
+
+### Excepciones
+
+| # | Situación | Respuesta del sistema |
+| --- | --- | --- |
+| E1 | Ningún producto está por debajo del mínimo | El proceso finaliza en silencio registrando únicamente el evento en el log interno. |
+| E2 | Producto configurado como inactivo/descontinuado | El sistema omite la alerta para dicho ítem. |
+| E3 | Alerta idéntica enviada previamente en la jornada | El sistema omite el reenvío para evitar la saturación de mensajes al usuario. |
+
+| Campo | Detalle |
+| --- | --- |
+| Rendimiento | Detección ≤ 5s desde la ejecución del ciclo; entrega en Telegram ≤ 15s total |
+| Frecuencia | Verificación programada cada 2 horas (dentro de la ventana de 07:00 a 23:00 hs) |
+| Importancia | Alta |
+| Urgencia | Alta |
+
+---
+
+## CU-07 — Validar Usuario Autorizado
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | CU-07 |
+| Nombre | Validar Usuario Autorizado |
+| Descripción | Incluido por los casos de uso transaccionales (`<<include>>`) para verificar si el ID del emisor coincide con el personal registrado. |
+| Actores | Principal: Sistema SN (Módulo de Seguridad) / Secundario: Telegram API |
+| Precondiciones | El sistema recibe una solicitud entrante enviada desde Telegram. |
+| Postcondiciones | Éxito: Se autentica la identidad permitiendo continuar el flujo invocador. / Fallo: Se deniega el acceso e interrumpe inmediatamente el flujo. |
+
+### Secuencia normal
+
+| # | Acción (actor) | Reacción (sistema) |
+| --- | --- | --- |
+| 1 | Telegram envía la trama del mensaje recibido. | El sistema extrae el identificador único del emisor (`user_id`). |
+| 2 | El sistema procesa la validación. | El sistema compara el ID contra la lista autorizada, confirmando la identidad y dando paso al proceso principal. |
+
+### Excepciones
+
+| # | Situación | Respuesta del sistema |
+| --- | --- | --- |
+| E1 | Identificador de usuario no registrado | El bot responde: "Acceso no autorizado" y aborta la ejecución inmediatamente (RF-10 / RNF-04). |
+
+| Campo | Detalle |
+| --- | --- |
+| Rendimiento | Tiempo de comprobación ≤ 1s |
+| Frecuencia | Presente en el 100% de los mensajes recibidos (~80 a 100 ejecuciones/día) |
+| Importancia | Alta |
+| Urgencia | Alta |
+
+---
+
+## CU-08 — Procesar Solicitud vía n8n
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | CU-08 |
+| Nombre | Procesar Solicitud vía n8n |
+| Descripción | Incluido por los CUs de usuario (`<<include>>`) para interpretar el comando, identificar la intención (*intent*) y derivar la ejecución en n8n. |
+| Actores | Principal: Sistema SN (Motor n8n) / Secundario: Ninguno |
+| Precondiciones | Usuario verificado correctamente en el módulo de seguridad (CU-07). |
+| Postcondiciones | Éxito: La solicitud queda interpretada y dirigida al subflujo de negocio correcto. / Fallo: Se redirige al manejo de error o comando no válido. |
+
+### Secuencia normal
+
+| # | Acción (actor) | Reacción (sistema) |
+| --- | --- | --- |
+| 1 | El sistema recibe la estructura del comando transmitida por Telegram. | n8n parsea el texto e identifica la intención del usuario (*intent*). |
+| 2 | n8n valida la coincidencia de la orden. | n8n deriva la ejecución al subflujo de automatización correspondiente. |
+
+### Excepciones
+
+| # | Situación | Respuesta del sistema |
+| --- | --- | --- |
+| E1 | Comando o intent no reconocido | Se activa la relación de extensión (`<<extend>>`) hacia el CU-10 (Notificar Comando Inválido). |
+| E2 | Error de ejecución en un nodo del flujo n8n | n8n captura el error y el bot responde: "Error al procesar la solicitud, intente nuevamente." |
+
+| Campo | Detalle |
+| --- | --- |
+| Rendimiento | Tiempo de procesamiento interno ≤ 10s |
+| Frecuencia | Equivalente al total de comandos procesados (~80 a 100 ejecuciones/día) |
+| Importancia | Alta |
+| Urgencia | Alta |
+
+---
+
+## CU-09 — Obtener Datos de Loyverse
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | CU-09 |
+| Nombre | Obtener Datos de Loyverse |
+| Descripción | Incluido por los CUs transaccionales (`<<include>>`) para gestionar la integración REST API con Loyverse y recuperar información. |
+| Actores | Principal: Sistema SN (Integrador API) / Secundario: Loyverse API |
+| Precondiciones | Credenciales de API (Token Bearer) válidas y configuradas en el entorno. |
+| Postcondiciones | Éxito: Los datos requeridos se estructuran en JSON y se entregan al flujo invocador. / Fallo: Se notifica la falla de integración al flujo de trabajo. |
+
+### Secuencia normal
+
+| # | Acción (actor) | Reacción (sistema) |
+| --- | --- | --- |
+| 1 | n8n construye la petición HTTP GET con las credenciales de autorización. | El sistema envía la solicitud al endpoint correspondiente de Loyverse. |
+| 2 | Loyverse procesa la petición y responde exitosamente (HTTP 200 OK). | n8n mapea la respuesta JSON y entrega los datos al flujo activo. |
+
+### Excepciones
+
+| # | Situación | Respuesta del sistema |
+| --- | --- | --- |
+| E1 | Token de API expirado o no válido (HTTP 401/403) | El sistema intenta renovar credenciales; de no ser posible, cancela la consulta y notifica error de integración. |
+| E2 | Timeout de red (> 5s) o error en servidor (HTTP 500/503) | El sistema marca los datos como no disponibles y notifica la falla de sincronización al flujo invocador. |
+
+| Campo | Detalle |
+| --- | --- |
+| Rendimiento | Tiempo de respuesta de API ≤ 5s (RNF-03) |
+| Frecuencia | 100 a 130 llamadas/día (asociada a cada CU que requiere sincronizar información) |
+| Importancia | Alta |
+| Urgencia | Alta |
+
+---
+
+## CU-10 — Notificar Comando Inválido
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | CU-10 |
+| Nombre | Notificar Comando Inválido |
+| Descripción | Extiende del CU-08 (`<<extend>>`) cuando una orden recibida no coincide con ningún comando o intención predefinida. |
+| Actores | Principal: Usuario Autorizado (Dueño o Encargado) / Secundario: Ninguno |
+| Precondiciones | El análisis de intención realizado en el CU-08 no arrojó ninguna coincidencia válida. |
+| Postcondiciones | Éxito: El usuario recibe un mensaje de ayuda y orientación en Telegram. / Fallo: N/A |
+
+### Secuencia normal
+
+| # | Acción (actor) | Reacción (sistema) |
+| --- | --- | --- |
+| 1 | n8n confirma que la orden ingresada no coincide con un flujo válido (CU-08). | n8n prepara el mensaje de sugerencia. |
+| 2 | El sistema envía la respuesta. | El bot responde: "Comando no válido, use /ayuda para ver las opciones disponibles." |
+
+### Excepciones
+
+| # | Situación | Respuesta del sistema |
+| --- | --- | --- |
+| E1 | Comando ingresado con alta similitud a uno válido | El bot sugiere la opción correcta (ej. si ingresa `/stok`, responde: "Comando no reconocido. ¿Quiso decir /stock?"). |
+
+| Campo | Detalle |
+| --- | --- |
+| Rendimiento | Tiempo de respuesta ≤ 15s (RNF-03) |
+| Frecuencia | 5% a 10% del total de comandos procesados diariamente |
+| Importancia | Baja |
+| Urgencia | Baja |
+
+---
+
+## CU-11 — Monitorear Flujos n8n
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | CU-11 |
+| Nombre | Monitorear Flujos n8n |
+| Descripción | Permite al Administrador del Sistema supervisar ejecuciones, auditar logs de auditoría y corregir fallos en los flujos de n8n. |
+| Actores | Principal: Administrador del Sistema / Secundario: Ninguno |
+| Precondiciones | Acceso con credenciales administrativas a la consola de n8n. |
+| Postcondiciones | Éxito: Los flujos quedan auditados y ajustados garantizando la estabilidad operativa. / Fallo: Se realiza el rollback de cambios si es necesario. |
+
+### Secuencia normal
+
+| # | Acción (actor) | Reacción (sistema) |
+| --- | --- | --- |
+| 1 | El Administrador del Sistema accede al panel de n8n. | El sistema muestra el historial de ejecuciones con su estado (éxito/error). |
+| 2 | El Administrador del Sistema inspecciona los flujos con fallos reportados. | El sistema visualiza la estructura y datos de entrada/salida de cada nodo. |
+| 3 | El Administrador del Sistema aplica correcciones y guarda los cambios. | El sistema actualiza y habilita la nueva versión del flujo automatizado. |
+
+### Excepciones
+
+| # | Situación | Respuesta del sistema |
+| --- | --- | --- |
+| E1 | Flujo no documentado detectado | Se marca el flujo como pendiente de estandarización antes de aplicar modificaciones (RNF-08). |
+| E2 | Regresión o quiebre de flujo tras modificación | Se realiza la reversión (rollback) inmediata a la última versión estable (RNF-06). |
+
+| Campo | Detalle |
+| --- | --- |
+| Rendimiento | Tarea de mantenimiento administrativa (sin restricción transaccional en tiempo real) |
+| Frecuencia | Revisión semanal rutinaria o ante reporte de incidentes técnicos |
+| Importancia | Media |
+| Urgencia | Media |
+
+---
+
+## CU-12 — Mantener Infraestructura del Sistema
+
+| Campo | Detalle |
+| --- | --- |
+| Identificador | CU-12 |
+| Nombre | Mantener Infraestructura del Sistema |
+| Descripción | Engloba las actividades de mantenimiento preventivo, copias de seguridad y verificación de conectividad del entorno. |
+| Actores | Principal: Administrador del Sistema / Secundario: Ninguno |
+| Precondiciones | Credenciales administrativas sobre servidores, webhooks e integraciones. |
+| Postcondiciones | Éxito: El sistema opera dentro del nivel de disponibilidad definido (07:00 a 23:00 hs). / Fallo: Se activan planes de contingencia. |
+
+### Secuencia normal
+
+| # | Acción (actor) | Reacción (sistema) |
+| --- | --- | --- |
+| 1 | El Administrador del Sistema verifica el estado de n8n, webhooks y API Keys. | El sistema despliega indicadores sobre el estado de las conexiones. |
+| 2 | El Administrador del Sistema aplica parches de actualización o respaldos. | El sistema registra el evento de mantenimiento y consolida la operación. |
+
+### Excepciones
+
+| # | Situación | Respuesta del sistema |
+| --- | --- | --- |
+| E1 | Ocurrencia de caída fuera del horario de servicio (23:01 a 06:59 hs) | No genera incidente crítico (RNF-02), programándose su solución antes de la apertura (07:00 hs). |
+| E2 | Caída prolongada de la API de Loyverse en horario operativo | Se notifica preventivamente al Dueño/Encargado sobre la interrupción del servicio externo. |
+
+| Campo | Detalle |
+| --- | --- |
+| Rendimiento | Tarea de mantenimiento administrativa |
+| Frecuencia | Quincenal / Mensual o a demanda ante contingencias técnicas |
+| Importancia | Alta |
+| Urgencia | Media |
 
 | Campo | Detalle |
 |-------|---------|
