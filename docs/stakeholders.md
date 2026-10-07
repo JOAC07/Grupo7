@@ -57,6 +57,11 @@ _Para cada una: describir su rol y por qué es clave para el proyecto._
 
 | Stakeholder | Tipo | Nivel de impacto |
 |-------------|------|-----------------|
-| | | Alto / Medio / Bajo |
-| | | Alto / Medio / Bajo |
-| | | Alto / Medio / Bajo |
+| Dueño del Comercio | Intermedio | Alto |
+| Encargado del Comercio | Intermedio | Alto |
+| Administrador del Sistema | | Medio |
+| Desarrollador del Sistema | | Medio |
+| Loyverse | Sistema externo | Alto |
+| Telegram | Sistema externo | Medio |
+| n8n | Sistema externo | Alto |
+| Comercio Cliente | Externo | Alto |
