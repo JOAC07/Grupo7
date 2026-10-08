@@ -8,7 +8,8 @@ _Visualizar en [plantuml.com](https://www.plantuml.com/plantuml/uml/)._
 ## Entidades
 
 | Entidad | Descripción | Relaciones clave |
-|Producto| Representa un producto del comercio, con su stock actual y el límite mínimo configurado para disparar alertas (RF-01, RF-04, RF-10).| 1 — N con Venta; 1 — N con Alerta |
+|---------|-------------|-------------------|
+| Producto | Representa un producto del comercio, con su stock actual y el límite mínimo configurado para disparar alertas (RF-01, RF-04, RF-10).| 1 — N con Venta; 1 — N con Alerta |
 | Venta | Representa una línea de venta: la venta de un producto en una fecha determinada (RF-02, RF-11, CU-02). | N — 1 con Producto |
 | Alerta |  Representa una notificación automática generada cuando el stock de un producto alcanza el mínimo definido (RF-04, CU-06). | N — 1 con Producto |
 | Usuario | Representa a una persona autorizada a interactuar con el sistema mediante su ID de Telegram (RF-08, RNF-05, CU-07). | Sin relaciones con otras entidades |
@@ -17,11 +18,11 @@ _Visualizar en [plantuml.com](https://www.plantuml.com/plantuml/uml/)._
 
 _Para cada entidad, describir brevemente los atributos más relevantes y su propósito._
 
-### Prodcuto
+### Producto
 
 - `id_producto` (PK): identificador único del producto.
 - `nombre`: nombre del producto, usado en consultas y alertas (RF-01).
-- `codigo`: código identificador interno del producto.
+- `codigo`: código identificador interno del producto; único.
 - `categoria`: categoría a la que pertenece, usada en reportes (RF-11).
 - `stock_actual`: cantidad disponible actualmente (RF-01, RNF-03).
 - `stock_minimo`: umbral que dispara una Alerta al ser alcanzado (RF-04, CU-06).
@@ -43,14 +44,16 @@ _Para cada entidad, describir brevemente los atributos más relevantes y su prop
 
 ### Usuario
 - `id_usuario` (PK): identificador único del usuario en el sistema.
-- `telegram_id`: identificador de Telegram usado para validar el acceso (RF-08, RNF-05, CU-07).
+- `telegram_id`: identificador de Telegram usado para validar el acceso (RF-08, RNF-05, CU-07); único.
 - `nombre`: nombre de referencia del usuario autorizado.
 
 ## Decisiones de diseño
 
-### Decisión 1 — Almacenamiento local de Producto y Venta en lugar de consulta en vivo a Loyverse
+### Decisión 1 — Almacenamiento local de Producto y Venta, actualizado por eventos de Loyverse
 
-Se decidió que Producto y Venta persistan localmente, sincronizándose periódicamente con Loyverse, en vez de consultar la API en tiempo real ante cada comando. Esto responde directamente a RNF-02 (respuesta ≤15 segundos) y RNF-03 (demora máxima de 5 segundos), y evita el riesgo de timeout descrito en CU-01/E2 ("Loyverse timeout/error 500"). Se descartó la consulta en vivo permanente porque dependería completamente de la disponibilidad y velocidad de un servicio externo para cumplir los tiempos de respuesta exigidos.
+Producto y Venta se guardan localmente en el SAS y se mantienen actualizados mediante los webhooks de la API de Loyverse (`inventory_levels.update` para el stock y `receipts.update` para las ventas). Cada evento llega a un flujo de n8n, que actualiza la copia local en el momento en que ocurre el cambio. Las consultas del usuario (RF-01, RF-02, RF-03, RF-05) se responden desde esa copia, sin esperar a la API de Loyverse. Esto permite cumplir RNF-03 (datos con una demora máxima de 5 segundos respecto de Loyverse) y RNF-02 (respuesta en 15 segundos), y evita el riesgo de timeout descrito en CU-01/E2. Como respaldo ante un evento perdido, se agrega una sincronización completa de baja frecuencia que corrige diferencias; el cumplimiento de RNF-03 no depende de ella.
+
+Se descartaron dos alternativas: consultar Loyverse en vivo ante cada comando, porque el cumplimiento de RNF-02 quedaría atado a la velocidad y disponibilidad de un servicio externo; y sincronizar solo de forma periódica, porque un intervalo de minutos no cumple los 5 segundos de RNF-03.
 
 
 ### Decisión 2 — Venta como línea individual, no como Transacción con detalle N-M
