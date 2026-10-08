@@ -6,7 +6,7 @@ entity Producto {
   * id_producto : integer <<PK>>
   --
   nombre : varchar
-  codigo : varchar
+  codigo : varchar <<UK>>
   categoria : varchar
   stock_actual : integer
   stock_minimo : integer
@@ -32,7 +32,7 @@ entity Alerta {
 entity Usuario {
   * id_usuario : integer <<PK>>
   --
-  telegram_id : varchar
+  telegram_id : varchar <<UK>>
   nombre : varchar
 }
 
