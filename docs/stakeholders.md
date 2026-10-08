@@ -57,8 +57,8 @@ _Para cada una: describir su rol y por qué es clave para el proyecto._
 
 | Stakeholder | Tipo | Nivel de impacto |
 |-------------|------|-----------------|
-| Dueño del Comercio | Intermedio | Alto |
-| Encargado del Comercio | Intermedio | Alto |
+| Dueño del Comercio | Interno | Alto |
+| Encargado del Comercio | Interno | Alto |
 | Administrador del Sistema | Interno | Medio |
 | Desarrollador del Sistema | Interno | Medio |
 | Loyverse | Sistema externo | Alto |
