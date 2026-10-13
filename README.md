@@ -33,6 +33,8 @@ El sistema no está orientado a una empresa puntual, sino diseñado como soluci�
 ├── integrantes.md
 ├── RECURSOS.md         ← leer antes de empezar: prerrequisitos, cheatsheet de git, recursos
 ├── docs/
+│   ├── DoR.md
+│   ├── slicing.md
 │   ├── requisitos.md
 │   ├── historias-de-usuario.md
 │   ├── casos-de-uso.md
