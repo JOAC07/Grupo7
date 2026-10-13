@@ -1,32 +1,5 @@
-@startuml
-title Diagrama de Casos de Uso - [Nombre del Sistema]
-
-left to right direction
-
-' --- Actores ---
-actor "[Actor principal]" as A1
-actor "[Actor secundario]" as A2
-
-' --- Sistema ---
-rectangle "[Nombre del Sistema]" {
-  usecase "[Caso de uso 1]" as UC1
-  usecase "[Caso de uso 2]" as UC2
-  usecase "[Caso de uso 3]" as UC3
-}
-
-' --- Relaciones actor-caso de uso ---
-A1 --> UC1
-A1 --> UC2
-A2 --> UC3
-
-' --- Relaciones entre casos de uso ---
-' UC2 .> UC1 : <<include>>
-' UC3 .> UC1 : <<extend>>
-
-@enduml
-
-
 @startuml CU_SAS
+title Diagrama de Casos de Uso - Sistema SAS
 left to right direction
 skinparam packageStyle rectangle
 
@@ -34,63 +7,44 @@ actor "Usuario Autorizado" as Usuario
 actor "Dueño del Comercio" as Dueno
 actor "Encargado del Comercio" as Encargado
 actor "Administrador del Sistema" as Admin
-actor "Telegram" as TG <<sistema externo>>
 actor "Loyverse" as LOY <<sistema externo>>
-actor "n8n" as N8N <<sistema externo>>
+actor "Telegram" as TG <<sistema externo>>
 
 Dueno --|> Usuario
 Encargado --|> Usuario
 
 rectangle "Sistema SAS" {
-  usecase "Consultar Stock de Producto" as UC1
-  usecase "Consultar Ventas por Período" as UC2
-  usecase "Consultar Productos Más Vendidos" as UC3
-  usecase "Consultar Resumen del Negocio" as UC4
-  usecase "Generar Reporte" as UC5
-  usecase "Recibir Alerta de Stock Bajo" as UC6
-  usecase "Validar Usuario Autorizado" as UC7
-  usecase "Procesar Solicitud vía n8n" as UC8
-  usecase "Obtener Datos de Loyverse" as UC9
-  usecase "Notificar Comando Inválido" as UC10
-  usecase "Monitorear Flujos n8n" as UC11
-  usecase "Mantener Infraestructura del Sistema" as UC12
+  usecase "CU-01\nConsultar Stock de Producto" as CU01
+  usecase "CU-02\nConsultar Ventas por Período" as CU02
+  usecase "CU-03\nConsultar Productos Más Vendidos" as CU03
+  usecase "CU-04\nConsultar Resumen del Negocio" as CU04
+  usecase "CU-05\nGenerar Reporte" as CU05
+  usecase "CU-06\nRecibir Alerta de Stock Bajo" as CU06
+  usecase "CU-07\nNotificar Comando Inválido" as CU07
+  usecase "CU-08\nMonitorear Flujos del Sistema" as CU08
+  usecase "CU-09\nMantener Infraestructura del Sistema" as CU09
 }
 
-Usuario -- UC1
-Usuario -- UC2
-Usuario -- UC3
-Usuario -- UC4
-Usuario -- UC5
-Usuario -- TG
+Usuario -- CU01
+Usuario -- CU02
+Usuario -- CU03
+Usuario -- CU04
+Usuario -- CU05
+Usuario -- CU06
+Usuario -- CU07
 
-UC1 ..> UC7 : <<include>>
-UC2 ..> UC7 : <<include>>
-UC3 ..> UC7 : <<include>>
-UC4 ..> UC7 : <<include>>
-UC5 ..> UC7 : <<include>>
+Admin -- CU08
+Admin -- CU09
 
-UC1 ..> UC8 : <<include>>
-UC2 ..> UC8 : <<include>>
-UC3 ..> UC8 : <<include>>
-UC4 ..> UC8 : <<include>>
-UC5 ..> UC8 : <<include>>
+CU01 -- LOY
+CU02 -- LOY
+CU03 -- LOY
+CU04 -- LOY
+CU05 -- LOY
+CU06 -- LOY
+CU09 -- LOY
 
-UC8 ..> UC9 : <<include>>
-UC6 ..> UC9 : <<include>>
-
-UC10 ..> UC8 : <<extend>>
-note right of UC10
-  Punto de extensión: "comando no reconocido"
-  (RF-06). Solo se ejecuta si el parser
-  de n8n no matchea ningún intent válido.
-end note
-
-N8N -- UC6
-UC6 -- TG
-LOY --> UC9
-
-Admin -- UC11
-Admin -- UC12
-UC11 ..> N8N
+CU06 -- TG
+CU09 -- TG
 
 @enduml
