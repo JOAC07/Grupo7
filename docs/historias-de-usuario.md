@@ -9,15 +9,15 @@ _Cada historia debe incluir formato clásico, criterios de aceptación y validac
 
 | Campo | Detalle |
 |-------|---------|
-| Historia | Como dueño o encargado del comercio, quiero consultar el stock disponible de los productos mediante Telegram, para conocer la disponibilidad de mercaderia en tiempo real. |
+| Historia | Como dueño o encargado del comercio, quiero consultar el stock disponible de los productos mediante Telegram, para conocer la disponibilidad de mercadería en tiempo real. |
 | Módulo | Consulta de información General |
 | Requisitos relacionados | RF-01, RNF-02 |
 
 ### Criterios de aceptación
 
-1. El usuario envia un comando de consulta de stock por Telegram y el bot responde con la cantidad disponible del producto solicitado.
+1. El usuario envía un comando de consulta de stock por Telegram y el bot responde con la cantidad disponible del producto solicitado.
 2. Si el producto consultado no existe en el sistema, el bot informa que no fue encontrado.
-3. El sistema responde a la consulta en un plazo máximo de 15 segundos, según lo definido en RNF-02
+3. El sistema responde a la consulta en un plazo máximo de 15 segundos, según lo definido en RNF-02.
 
 ### Validación INVEST
 
@@ -37,7 +37,7 @@ _Cada historia debe incluir formato clásico, criterios de aceptación y validac
 | Campo | Detalle |
 |-------|---------|
 | Historia | Como dueño o encargado del comercio, quiero recibir alertas automáticas cuando un producto tenga poco stock, para evitar faltantes de mercadería. |
-| Módulo | Consulta de Inofrmacion General |
+| Módulo | Consulta de Información General |
 | Requisitos relacionados | RF-04 |
 
 ### Criterios de aceptación
@@ -86,27 +86,30 @@ _Cada historia debe incluir formato clásico, criterios de aceptación y validac
 
 ---
 
-## HU-04 — Generación de Reporte
+## HU-04 — Generación de Reporte de Ventas
 
 | Campo | Detalle |
 |-------|---------|
-| Historia | Como dueño o encargado del comercio, quiero generar reportes de ventas, stock e indicadores del negocio, para analizar el desempeño comercial. |
-| Módulo | Registro y Reportes. |
-| Requisitos relacionados | RF-12, RNF-03. |
+| Historia | Como dueño o encargado del comercio, quiero generar un reporte de ventas para un período determinado, para analizar el desempeño comercial. |
+| Módulo | Registro y Reportes |
+| Requisitos relacionados | RF-11, RF-12, RNF-02, RNF-03 |
 
 ### Criterios de aceptación
 
-1. El usuario solicita un reporte mediante un comando específico en Telegram.
-2. El sistema obtiene los datos de ventas y stock desde Loyverse y genera el reporte correspondiente, actualizado según RNF-03.
-3. El bot entrega el reporte al usuario en un formato legible dentro del chat, sin necesidad de abrir un archivo externo.
+1. El usuario envía `/reporte ventas <período>` y el bot entrega en el chat el reporte con el total de ventas, la cantidad de registros y el detalle por producto.
+2. El reporte se genera con los datos de ventas del sistema, con una demora máxima de 5 segundos respecto de Loyverse (RNF-03).
+3. El bot entrega el reporte en un máximo de 15 segundos para hasta 1000 registros (RNF-02).
+4. Si el período indicado es inválido, el bot responde "Rango de fechas inválido" y no genera el reporte.
+5. Si no hay ventas en el período, el bot responde "Sin movimientos en el período solicitado".
+6. Si el período supera los 1000 registros, el bot entrega un reporte parcial e informa "Reporte truncado, solicite un rango menor".
 
 ### Validación INVEST
 
 | Criterio | ¿Se cumple? | Observación |
 |----------|-------------|-------------|
-| Independiente | Si | No requiere que HU-01 o HU-03 estén implementadas, aunque comparta el mismo canal de comunicación. |
-| Negociable | Si | El diseño exacto del reporte (columnas, orden) puede definirse en conjunto con el cliente. |
-| Valiosa | Si | Le da al dueño una visión consolidada del negocio que hoy no tiene sin entrar a Loyverse manualmente. |
-| Estimable | Si | El alcance (ventas + stock + movimiento) ya está definido en RF-12, lo que permite estimarlo. |
-| Pequeña | Si | Puede desarrollarse como una funcionalidad acotada, generando un solo tipo de reporte por vez. |
-| Verificable | Si | Se prueba solicitando un reporte y comparando los totales de venta y stock que muestra contra los datos reales cargados en Loyverse al momento de la consulta (RF-12, RNF-03). |
+| Independiente | Sí | Solo requiere que las ventas estén almacenadas (RF-11); no depende de otras historias. |
+| Negociable | Sí | El orden y el formato del detalle por producto se pueden acordar sin cambiar el objetivo. |
+| Valiosa | Sí | Le permite al dueño ver las ventas de un período sin entrar a Loyverse. |
+| Estimable | Sí | El alcance es un solo tipo de reporte, con tres casos de error ya definidos. |
+| Pequeña | Sí | Cubre un único tipo de reporte con un solo comando; los reportes de stock y de indicadores quedan como historias aparte. |
+| Verificable | Sí | Se prueba con un período de ventas conocidas, comparando el total y la cantidad con Loyverse, midiendo que la respuesta llegue en 15 segundos o menos (RNF-02) y forzando cada uno de los tres errores. |
