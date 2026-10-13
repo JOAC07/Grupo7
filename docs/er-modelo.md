@@ -12,7 +12,9 @@ _Visualizar en [plantuml.com](https://www.plantuml.com/plantuml/uml/)._
 | Producto | Representa un producto del comercio, con su stock actual y el límite mínimo configurado para disparar alertas (RF-01, RF-04, RF-10).| 1 — N con Venta; 1 — N con Alerta |
 | Venta | Representa una línea de venta: la venta de un producto en una fecha determinada (RF-02, RF-11, CU-02). | N — 1 con Producto |
 | Alerta |  Representa una notificación automática generada cuando el stock de un producto alcanza el mínimo definido (RF-04, CU-06). | N — 1 con Producto |
-| Usuario | Representa a una persona autorizada a interactuar con el sistema mediante su ID de Telegram (RF-08, RNF-05, CU-07). | Sin relaciones con otras entidades |
+| Usuario | Representa a una persona autorizada a interactuar con el sistema mediante su ID de Telegram (RF-08, RNF-05). | Sin relaciones con otras entidades |
+
+_Nota: en este modelo, "movimiento" (RF-05, RF-12) se entiende como venta. Las reposiciones y ajustes de stock se reflejan en `stock_actual`, que se actualiza con cada cambio de inventario de Loyverse, pero no se guarda un historial de ellos._
  
 ## Descripción de atributos principales
 
@@ -44,7 +46,7 @@ _Para cada entidad, describir brevemente los atributos más relevantes y su prop
 
 ### Usuario
 - `id_usuario` (PK): identificador único del usuario en el sistema.
-- `telegram_id`: identificador de Telegram usado para validar el acceso (RF-08, RNF-05, CU-07); único.
+- `telegram_id`: identificador de Telegram usado para validar el acceso (RF-08, RNF-05); único.
 - `nombre`: nombre de referencia del usuario autorizado.
 
 ## Decisiones de diseño
@@ -62,4 +64,4 @@ Se descartó modelar una entidad Transacción vinculada a Producto mediante una 
 
 ### Decisión 3 — Usuario sin relación con las entidades comerciales
 
-Se decidió no vincular Usuario con Producto, Venta o Alerta. La función de Usuario en el sistema es exclusivamente autorizar el acceso (RF-08, RNF-05, CU-07), una validación binaria que no distingue acciones entre los usuarios autorizados. Aunque el sistema permite realizar consultas y recibir reportes, estas son interacciones en tiempo real que no generan un dato persistente vinculado a un usuario específico: ningún requisito pide trazabilidad de qué usuario realizó cada consulta. Si en el futuro surgiera ese requisito, se podría incorporar una entidad adicional (por ejemplo, un registro de consultas) sin modificar el resto del modelo.
+Se decidió no vincular Usuario con Producto, Venta o Alerta. La función de Usuario en el sistema es exclusivamente autorizar el acceso (RF-08, RNF-05), una validación binaria que no distingue acciones entre los usuarios autorizados. Aunque el sistema permite realizar consultas y recibir reportes, estas son interacciones en tiempo real que no generan un dato persistente vinculado a un usuario específico: ningún requisito pide trazabilidad de qué usuario realizó cada consulta. Si en el futuro surgiera ese requisito, se podría incorporar una entidad adicional (por ejemplo, un registro de consultas) sin modificar el resto del modelo.
